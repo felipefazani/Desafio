@@ -1,7 +1,7 @@
 import os
 import csv
+import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
@@ -33,8 +33,16 @@ class WebScraping:
             for regiao in self.lista_regioes:
                 if regiao+".csv" in arquivo:
                     print("Arquivo: ", arquivo, "   Regiao: ", regiao)
-                    with open(self.caminho_downloads + "/" + arquivo, "r", newline='') as arq:
-                        leitor = csv.reader((x.replace('\0', '') for x in arq), delimiter=' ', quotechar='|')
-                        for linha in leitor:
-                            print(linha)
+                    with open(self.caminho_downloads + "/" + arquivo, "r", newline='\n') as arq:
+                        leitor = csv.reader((x.replace('\0', '') for x in arq), delimiter=';', quotechar='|')
+                        with open("Dataset/dataframe.csv", "a") as df:
+                            escritor = csv.writer(df)
+                            for linha in leitor:
+                                if len(linha) != 0:
+                                    if linha[0] == '2021' or linha[0] == '2020':
+                                        ano = int(linha[0])
+                                    elif linha[0] == 'Ocorrencia':
+                                        continue
+                                    else:
+                                        # linha[0] vai ser o 
 
