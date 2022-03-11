@@ -1,5 +1,7 @@
 import os
 import csv
+import time
+
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -26,6 +28,8 @@ class WebScraping:
                 select = Select(self.driver.find_element(By.ID, "conteudo_ddlRegioes"))
                 select.select_by_visible_text(regiao)
                 self.driver.find_element(By.ID, "conteudo_btnExcel").click()
+        time.sleep(5)
+        self.driver.close()
 
     def organiza(self):
         """ Organiza todos os arquivos baixados em uma única tabela """
@@ -63,3 +67,4 @@ class WebScraping:
         df.to_csv("dataframe.csv", index=False)
         df = pd.read_csv("dataframe.csv")
         print(df)
+        
