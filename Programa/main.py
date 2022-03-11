@@ -1,10 +1,13 @@
 import WebScraping as Wb
 
 if __name__ == '__main__':
-    obj = Wb.WebScraping("http://www.ssp.sp.gov.br/Estatistica/Pesquisa.aspx")
+    url = "http://www.ssp.sp.gov.br/Estatistica/Pesquisa.aspx"
     regioes = ["Capital", "Grande São Paulo (exclui a Capital)", "São José dos Campos", "Campinas", "Ribeirão Preto",
                "Bauru", "São José do Rio Preto", "Santos", "Sorocaba", "Presidente Prudente", "Piracicaba", "Araçatuba"]
+    caminho = "C:/Users/fatecano/Downloads"
 
-    obj.organiza(regioes, "C:/Users/Felipe/Downloads")
+    obj = Wb.WebScraping(url, regioes, caminho)
+    obj.download()
+    obj.organiza()
 
 
