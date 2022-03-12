@@ -1,7 +1,6 @@
 import os
 import csv
 import time
-
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -65,6 +64,3 @@ class WebScraping:
         colunas = ["Natureza", "Mes", "Ano", "Regiao", "Ocorrencias"]
         df = pd.DataFrame(matriz_organizada, columns=colunas)
         df.to_csv("dataframe.csv", index=False)
-        df = pd.read_csv("dataframe.csv")
-        print(df)
-        
