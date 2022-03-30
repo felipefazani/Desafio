@@ -54,6 +54,3 @@ def main():
     obj.organiza()
     graficos(regioes)
 
-
-if __name__ == '__main__':
-    main()
