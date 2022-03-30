@@ -1,5 +1,5 @@
 import unittest
-import Programa
+import main
 
 
 class TestaMain(unittest.TestCase):
