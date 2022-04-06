@@ -1,4 +1,4 @@
-name: Python package
+name: Test Main
 
 on: [push, workflow_dispatch]
 
