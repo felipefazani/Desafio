@@ -2,6 +2,7 @@ import os
 import csv
 import time
 import pandas as pd
+import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -11,6 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 class WebScraping:
     def __init__(self, url, lista_regioes, caminho_downloads):
+        chromedriver_autoinstaller.install()
         self.driver = webdriver.Chrome()
         self.driver.get(url)
         self.lista_regioes = lista_regioes

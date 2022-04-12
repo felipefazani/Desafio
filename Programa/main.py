@@ -48,7 +48,7 @@ def main():
                "Ribeirão Preto",
                "Bauru", "São José do Rio Preto", "Santos", "Sorocaba", "Presidente Prudente", "Piracicaba",
                "Araçatuba"]
-    caminho = "C:/Users/Felipe/Downloads"
+    caminho = "C:/Users/Usuário/Downloads"
     obj = Wb.WebScraping(url, regioes, caminho)
     obj.download()
     obj.organiza()
