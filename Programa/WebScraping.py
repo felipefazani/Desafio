@@ -8,12 +8,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 
 
 class WebScraping:
     def __init__(self, url, lista_regioes, caminho_downloads):
         chromedriver_autoinstaller.install()
-        self.driver = webdriver.Chrome()
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        self.driver = webdriver.Chrome(chrome_options=chrome_options)
         self.driver.get(url)
         self.lista_regioes = lista_regioes
         self.caminho_downloads = caminho_downloads
