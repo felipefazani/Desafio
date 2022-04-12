@@ -29,6 +29,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: |
-          ls
-          pwd
+      - run: python ./Programa/main.py
