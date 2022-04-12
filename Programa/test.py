@@ -1,12 +1,12 @@
 import unittest
-import main
+import analise
 
 
 class TestaMain(unittest.TestCase):
 
     def setUp(self):
         self.data = {"a": 249, "b": 260, "c": 200, "d": 230}
-        self.result = main.maiores(self.data, 2)
+        self.result = analise.maiores(self.data, 2)
 
     def test_maiores(self):
         self.assertEqual(self.result[0][1], 260, "Maiores deveria uma lista organizada com os maiores")
