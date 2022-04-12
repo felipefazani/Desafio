@@ -1,10 +1,10 @@
-name: Test Main
+name: Test Analise
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
-
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:

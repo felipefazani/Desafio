@@ -2,7 +2,7 @@ import unittest
 import analise
 
 
-class TestaMain(unittest.TestCase):
+class TestaAnalise(unittest.TestCase):
 
     def setUp(self):
         self.data = {"a": 249, "b": 260, "c": 200, "d": 230}
