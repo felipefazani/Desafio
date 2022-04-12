@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.options import Options
 
 class WebScraping:
     def __init__(self, url, lista_regioes, caminho_downloads):
-        chromedriver_autoinstaller.install()
+        chromedriver_autoinstaller.install()  # instala o chrome driver e o adiciona ao path
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
