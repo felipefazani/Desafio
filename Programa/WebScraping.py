@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 
 class WebScraping:
     def __init__(self, url="http://www.ssp.sp.gov.br/Estatistica/Pesquisa.aspx"):
+        """Instala o chromedriver e inicia o webdriver do chrome"""
         chromedriver_autoinstaller.install()  # instala o chrome driver e o adiciona ao path
         chrome_options = Options()
         chrome_options.add_argument('--headless')
@@ -18,46 +19,50 @@ class WebScraping:
         self.driver = webdriver.Chrome(chrome_options=chrome_options)
         self.driver.get(url)
 
+        """Atribuindo xpath utilizados"""
+        self.month_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[5]/div[1]/div/a'
+        self.region_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[2]/div/select'
+        self.year_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[1]/div/select'
+        self.city_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[3]/div[1]/div/select'
+        self.table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
+
     def crawler(self):
         """entrada saida"""
 
         """clica no botao de ocorrencias por mês"""
-        month_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[5]/div[1]/div/a'
-        elem = self.driver.find_element(By.XPATH, month_xpath)
+        elem = self.driver.find_element(By.XPATH, self.month_xpath)
         elem.click()
 
         """recebe todos os nomes de cada regiao dentro do dropdown"""
-        region_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[2]/div/select'
-        all_regions = self.all_options(region_xpath)
+        all_regions = self.all_options(self.region_xpath)
         all_regions.pop(0)  # retira o todos
 
         """recebe todos os anos disponiveis dentro do dropdown"""
-        year_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[1]/div/select'
-        all_years = self.all_options(year_xpath)
+        all_years = self.all_options(self.year_xpath)
         all_years.pop(0)  # retira o todos
 
         """iteracao de todos os municipios separados por regiao de cada ano"""
         df = pd.DataFrame()
         for year in all_years:
-            self.select_option_dropdown(year_xpath, year)
+            self.select_option_dropdown(self.year_xpath, year)
 
             for region in all_regions:
-                self.select_option_dropdown(region_xpath, region)
+                self.select_option_dropdown(self.region_xpath, region)
 
                 """recebe todos os nomes de cada municipio dentro do dropdown de cada regiao"""
-                city_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[3]/div[1]/div/select'
-                all_cities = self.all_options(city_xpath)
+                all_cities = self.all_options(self.city_xpath)
                 all_cities.pop(0)  # retira o todos
 
                 for city in all_cities:
-                    self.select_option_dropdown(city_xpath, city)
+                    self.select_option_dropdown(self.city_xpath, city)
 
-                    table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
-                    df_city = self.table_html_to_df(table_xpath)
+                    df_city = self.table_html_to_df(self.table_xpath)
                     df_city['Ano'] = year
                     df_city['Cidade'] = city
                     df_city['Regiao'] = region
                     df = pd.concat([df, df_city], ignore_index=True)
+
+        df.to_csv("all_data.csv")
 
     def all_options(self, xpath):
         """Recebe o xpath de um dropdown e retorna uma lista com todos os nomes de cada opcao"""
