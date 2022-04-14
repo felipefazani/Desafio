@@ -1,5 +1,3 @@
-import csv
-import time
 import pandas as pd
 import chromedriver_autoinstaller
 from selenium import webdriver
@@ -21,36 +19,48 @@ class WebScraping:
         self.driver.get(url)
 
     def crawler(self):
-        elem = self.driver.find_element(By.ID, "conteudo_btnMensal")
+        """entrada saida"""
+
+        """clica no botao de ocorrencias por mês"""
+        month_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[5]/div[1]/div/a'
+        elem = self.driver.find_element(By.XPATH, month_xpath)
         elem.click()
 
+        """recebe todos os nomes de cada regiao dentro do dropdown"""
         region_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[2]/div/select'
         all_regions = self.all_options(region_xpath)
-        all_regions.pop(0) # retira o todos
+        all_regions.pop(0)  # retira o todos
+
+        """recebe todos os anos disponiveis dentro do dropdown"""
         year_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[1]/div/select'
         all_years = self.all_options(year_xpath)
-        all_years.pop(0) # retira o todos
+        all_years.pop(0)  # retira o todos
 
+        """iteracao de todos os municipios separados por regiao de cada ano"""
+        df = pd.DataFrame()
         for year in all_years:
-            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, year_xpath)))
-            select_year = Select(self.driver.find_element(By.XPATH, year_xpath))
-            select_year.select_by_visible_text(year)
+            self.select_option_dropdown(year_xpath, year)
 
             for region in all_regions:
-                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, region_xpath)))
-                select = Select(self.driver.find_element(By.XPATH, region_xpath))
-                select.select_by_visible_text(region)
-                # basta pegar a tabela agora
-                table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
-                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, table_xpath)))
-                table = self.driver.find_element(By.XPATH, table_xpath)
-                table_html = table.get_attribute("outerHTML")
-                df = pd.read_html(table_html)
-                print(region, year)
-                print(df)
+                self.select_option_dropdown(region_xpath, region)
+
+                """recebe todos os nomes de cada municipio dentro do dropdown de cada regiao"""
+                city_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[3]/div[1]/div/select'
+                all_cities = self.all_options(city_xpath)
+                all_cities.pop(0)  # retira o todos
+
+                for city in all_cities:
+                    self.select_option_dropdown(city_xpath, city)
+
+                    table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
+                    df_city = self.table_html_to_df(table_xpath)
+                    df_city['Ano'] = year
+                    df_city['Cidade'] = city
+                    df_city['Regiao'] = region
+                    df = pd.concat([df, df_city], ignore_index=True)
 
     def all_options(self, xpath):
-        """Recebe o xpath de um select e retorna uma lista com todos os nomes de cada opcao"""
+        """Recebe o xpath de um dropdown e retorna uma lista com todos os nomes de cada opcao"""
         element = self.driver.find_element(By.XPATH, xpath)
         select_element = Select(element)
         all_element_names = []
@@ -58,3 +68,18 @@ class WebScraping:
             all_element_names.append(option.get_attribute("text"))
 
         return all_element_names
+
+    def table_html_to_df(self, table_xpath):
+        """Recebe o xpath de uma tabela em html e a transforma em dataframe"""
+        WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, table_xpath)))
+        table = self.driver.find_element(By.XPATH, table_xpath)
+        table_html = table.get_attribute("outerHTML")
+
+        return pd.read_html(table_html)[0]
+
+    def select_option_dropdown(self, dropdown_xpath, option_name):
+        """Recebe xpath de um dropdown e uma opcao dentro desse e a seleciona"""
+        WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, dropdown_xpath)))
+        select = Select(self.driver.find_element(By.XPATH, dropdown_xpath))
+        select.select_by_visible_text(option_name)
+
