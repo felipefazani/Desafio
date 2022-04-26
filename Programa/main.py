@@ -3,7 +3,9 @@ import WebScraping as Wb
 
 def main():
     obj = Wb.WebScraping()
-    obj.crawler()
+
+    anos = ["2022"]
+    obj.crawler(anos)
 
 
 if __name__ == '__main__':

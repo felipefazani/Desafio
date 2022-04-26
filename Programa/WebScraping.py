@@ -26,8 +26,9 @@ class WebScraping:
         self.city_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[3]/div[1]/div/select'
         self.table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
 
-    def crawler(self):
-        """entrada saida"""
+    def crawler(self, years=None):
+        """Entra com uma lista de anos e devolve um dataframe com todos as ocorrencias de cada municipio por ano
+            Caso nao passe nenhum ano por parametro ele vai usar todos os anos disponiveis"""
 
         """clica no botao de ocorrencias por mês"""
         elem = self.driver.find_element(By.XPATH, self.month_xpath)
@@ -37,9 +38,12 @@ class WebScraping:
         all_regions = self.all_options(self.region_xpath)
         all_regions.pop(0)  # retira o todos
 
-        """recebe todos os anos disponiveis dentro do dropdown"""
-        all_years = self.all_options(self.year_xpath)
-        all_years.pop(0)  # retira o todos
+        if years==None:
+            """recebe todos os anos disponiveis dentro do dropdown"""
+            all_years = self.all_options(self.year_xpath)
+            all_years.pop(0)  # retira o todos
+        else:
+            all_years = years
 
         """iteracao de todos os municipios separados por regiao de cada ano"""
         df = pd.DataFrame()
