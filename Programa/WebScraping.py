@@ -1,6 +1,3 @@
-import os
-import csv
-import time
 import pandas as pd
 import chromedriver_autoinstaller
 from selenium import webdriver
@@ -12,7 +9,8 @@ from selenium.webdriver.chrome.options import Options
 
 
 class WebScraping:
-    def __init__(self, url, lista_regioes, caminho_downloads):
+    def __init__(self, url="http://www.ssp.sp.gov.br/Estatistica/Pesquisa.aspx"):
+        """Instala o chromedriver e inicia o webdriver do chrome"""
         chromedriver_autoinstaller.install()  # instala o chrome driver e o adiciona ao path
         chrome_options = Options()
         chrome_options.add_argument('--headless')
@@ -20,54 +18,77 @@ class WebScraping:
         chrome_options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(chrome_options=chrome_options)
         self.driver.get(url)
-        self.lista_regioes = lista_regioes
-        self.caminho_downloads = caminho_downloads
 
-    def download(self):
-        """ Baixa todos os csv separados por região """
-        elem = self.driver.find_element(By.ID, "conteudo_btnMensal")
+        """Atribuindo xpath utilizados"""
+        self.month_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[5]/div[1]/div/a'
+        self.region_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[2]/div/select'
+        self.year_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[2]/div[1]/div/select'
+        self.city_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[1]/div[3]/div[1]/div/select'
+        self.table_xpath = '/html/body/div[3]/div/div[1]/form/div[3]/div[2]/div/div[1]/div/table'
+
+    def crawler(self, years=None):
+        """Entra com uma lista de anos e devolve um dataframe com todos as ocorrencias de cada municipio por ano
+            Caso nao passe nenhum ano por parametro ele vai usar todos os anos disponiveis"""
+
+        """clica no botao de ocorrencias por mês"""
+        elem = self.driver.find_element(By.XPATH, self.month_xpath)
         elem.click()
-        for regiao in self.lista_regioes:
-            baixados = [baixado for baixado in os.listdir(self.caminho_downloads) if regiao + ".csv" in baixado]
-            if "Mensal-Região " + regiao + ".csv" not in baixados:  # apenas baixa aqueles que ainda não foram baixados
-                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "conteudo_ddlRegioes")))
-                select = Select(self.driver.find_element(By.ID, "conteudo_ddlRegioes"))
-                select.select_by_visible_text(regiao)
-                self.driver.find_element(By.ID, "conteudo_btnExcel").click()
-        time.sleep(5)
-        self.driver.close()
 
-    def organiza(self):
-        """ Organiza todos os arquivos baixados em uma única tabela """
-        matriz_organizada = []
-        for arquivo in os.listdir(self.caminho_downloads):
-            for regiao in self.lista_regioes:
-                if regiao + ".csv" in arquivo:  # verifica se o arquivo dentro da pasta download é uma das regiões
-                    with open(self.caminho_downloads + "/" + arquivo, "r", newline='\n') as arq:
-                        leitor = csv.reader((x.replace('\0', '') for x in arq), delimiter=';', quotechar='|')
-                        for linha in leitor:
-                            if len(linha) != 0:
-                                if linha[0] == '2021' or linha[0] == '2020':
-                                    ano = int(linha[0])
-                                    pode = True
-                                elif linha[0] == '2022':
-                                    pode = False
-                                elif linha[0] == 'Ocorrencia' or len(linha) <= 1:
-                                    continue
-                                elif pode:
-                                    meses = {1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr", 5: "Mai", 6: "Jun",
-                                             7: "Jul", 8: "Ago", 9: "Set", 10: "Out", 11: "Nov", 12: "Dez"}
-                                    natureza = linha[0]
-                                    for i in range(1, 13):
-                                        linha_organizada = []
-                                        ocorencia_mes = linha[i]
-                                        linha_organizada.append(natureza)
-                                        linha_organizada.append(meses[i])
-                                        linha_organizada.append(ano)
-                                        linha_organizada.append(regiao)
-                                        linha_organizada.append(ocorencia_mes)
-                                        matriz_organizada.append(linha_organizada)
+        """recebe todos os nomes de cada regiao dentro do dropdown"""
+        all_regions = self.all_options(self.region_xpath)
+        all_regions.pop(0)  # retira o todos
 
-        colunas = ["Natureza", "Mes", "Ano", "Regiao", "Ocorrencias"]
-        df = pd.DataFrame(matriz_organizada, columns=colunas)
-        df.to_csv("dataframe.csv", index=False)
+        if years==None:
+            """recebe todos os anos disponiveis dentro do dropdown"""
+            all_years = self.all_options(self.year_xpath)
+            all_years.pop(0)  # retira o todos
+        else:
+            all_years = years
+
+        """iteracao de todos os municipios separados por regiao de cada ano"""
+        df = pd.DataFrame()
+        for year in all_years:
+            self.select_option_dropdown(self.year_xpath, year)
+
+            for region in all_regions:
+                self.select_option_dropdown(self.region_xpath, region)
+
+                """recebe todos os nomes de cada municipio dentro do dropdown de cada regiao"""
+                all_cities = self.all_options(self.city_xpath)
+                all_cities.pop(0)  # retira o todos
+
+                for city in all_cities:
+                    self.select_option_dropdown(self.city_xpath, city)
+
+                    df_city = self.table_html_to_df(self.table_xpath)
+                    df_city['Ano'] = year
+                    df_city['Cidade'] = city
+                    df_city['Regiao'] = region
+                    df = pd.concat([df, df_city], ignore_index=True)
+
+        df.to_csv("all_data.csv")
+
+    def all_options(self, xpath):
+        """Recebe o xpath de um dropdown e retorna uma lista com todos os nomes de cada opcao"""
+        element = self.driver.find_element(By.XPATH, xpath)
+        select_element = Select(element)
+        all_element_names = []
+        for option in select_element.options:
+            all_element_names.append(option.get_attribute("text"))
+
+        return all_element_names
+
+    def table_html_to_df(self, table_xpath):
+        """Recebe o xpath de uma tabela em html e a transforma em dataframe"""
+        WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, table_xpath)))
+        table = self.driver.find_element(By.XPATH, table_xpath)
+        table_html = table.get_attribute("outerHTML")
+
+        return pd.read_html(table_html)[0]
+
+    def select_option_dropdown(self, dropdown_xpath, option_name):
+        """Recebe xpath de um dropdown e uma opcao dentro desse e a seleciona"""
+        WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, dropdown_xpath)))
+        select = Select(self.driver.find_element(By.XPATH, dropdown_xpath))
+        select.select_by_visible_text(option_name)
+
